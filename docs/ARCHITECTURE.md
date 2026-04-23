@@ -1,40 +1,47 @@
-# Covian XSS Framework (Binary-Level Directive Architecture)
+# Covian Security Architecture
 
-## Abstract
-Covian XSS is a **zero-trust output encoding framework** that moves sanitization logic from mutable JavaScript code into a compiled WebAssembly module built from C++. Developers use a single directive-style API (`secure`) to encode dynamic values before rendering.
+## Layer 1: C++ Trusted Core
+`cpp/secure_core.cpp` is the only trusted security boundary.
 
-## Architecture Layers
-1. **Unsafe Layer (JavaScript App Layer)**
-   - Untrusted data enters from URL params, API responses, forms, and third-party sources.
-2. **Isolation Layer (C++ → WebAssembly Core)**
-   - Deterministic single-pass lexical encoding runs in Wasm linear memory.
-   - No DOM or `window` access from the core.
-3. **Directive Compiler Layer (optional)**
-   - `tools/pragma_compiler.js` rewrites `// #pragma covian secure` comment-directives to `secure` tagged-template calls at build time.
-4. **Directive Layer (JavaScript Tag Function)**
-   - Developer-facing one-line usage: `secure` tagged template literals.
+It provides deterministic, side-effect free functions:
+- `encode_text`, `encode_attr`, `encode_url`
+- `validate_utf8`, `normalize_input`, `detect_control_chars`
+- Wasm exports: `encodeText`, `encodeAttr`, `encodeURL`, `validateUTF8`
 
-## Security Model
-- Primary control: output encoding for HTML text context.
-- Secondary controls (recommended in production):
-  - CSP (`script-src`, `require-trusted-types-for 'script'`)
-  - Trusted Types policies for dangerous sinks
-  - Input validation and server-side encoding where appropriate
+No DOM logic, HTML generation, or templating exists in this layer.
 
-## Standards Alignment
-- OWASP XSS Prevention Cheat Sheet (contextual output encoding)
-- OWASP ASVS (V5, V8 controls relevant to output handling)
-- W3C WebAssembly security model
+## Layer 2: Wasm Isolation
+The C++ core is compiled with Emscripten. The runtime exposes encoding-only calls through `js/secure_engine.js` and no rendering primitives.
 
-## Build Pipeline
-- `cpp/secure_core.cpp` compiled by Emscripten.
-- Output artifacts:
-  - `js/secure_engine.js`
-  - `js/secure_engine.wasm`
-- Runtime directive in `js/secure-directive.js` calls exported C++ symbols via `ccall`.
+## Layer 3: Safe DOM Runtime
+`js/dom_api.js` provides the only rendering primitives:
+- `createElement(tag, options)`
+- `createText(value)`
+- `setText(element, value)`
+- `setAttr(element, name, value)`
+- `mount(root, element)`
 
-## API Contract
-- `createSecureDirective(): Promise<(strings, ...values) => string>`
-- `secure_transform(const char*): const char*` — returns a pointer into an internal thread-local buffer; valid only until the next call. Callers must not store this pointer.
-- `secure_transform_alloc(const char*): char*` — returns a heap-allocated buffer the caller must free via `secure_free`.
-- `secure_free(char*)`
+Rules:
+- Children must be DOM nodes.
+- Text and attributes are encoded at boundary crossing.
+- URL-bearing attributes are scheme-validated and encoded.
+
+## Layer 4: Sink Hardening
+`js/safe-dom.js` blocks:
+- `innerHTML`
+- `outerHTML`
+- `insertAdjacentHTML`
+- `document.write`
+
+Violation message:
+`Covian Security Violation: Unsafe DOM sink blocked`
+
+## Layer 5: Trusted Types
+`js/policy.js` requires Trusted Types support and fails closed otherwise.
+
+## Test Strategy
+`cpp/test_secure_core.cpp` validates:
+- Real payload handling (`<script>`, event-handler injections, URL schemes)
+- URL scheme blocking (`javascript:`, `data:`)
+- UTF-8 and control character validation
+- Adversarial fuzzing for HTML meta-character safety
