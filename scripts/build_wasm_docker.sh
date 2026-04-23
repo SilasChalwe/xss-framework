@@ -22,6 +22,6 @@ docker run --rm \
   -s ENVIRONMENT='web,worker' \
   -s EXPORTED_FUNCTIONS='["_encodeText","_encodeAttr","_encodeURL","_validateUTF8","_encode_text","_encode_attr","_encode_url","_validate_utf8","_normalize_input","_detect_control_chars"]' \
   -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString"]' \
-  -o /src/js/secure_engine.js
+  -o /src/js/secure_engine.generated.js
 
-echo "Built with Docker: js/secure_engine.js and js/secure_engine.wasm"
+echo "Built with Docker: js/secure_engine.generated.js and js/secure_engine.wasm"
