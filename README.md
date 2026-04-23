@@ -5,6 +5,7 @@ Covian is a **security-first rendering architecture** with deterministic C++ enc
 ## Who developed Covian?
 Covian is an open-source framework maintained by the repository contributors. If you are embedding Covian in your product, treat the C++ core + Wasm boundary as the trusted security component and keep all UI rendering on the safe DOM API.
 
+
 ## Security Guarantees
 - No string-based HTML rendering API in default usage.
 - Unsafe DOM sinks are patched and blocked (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`).
@@ -111,6 +112,7 @@ const dom = await createDomApi({ wasmFactory: createWasmModule });
 const textNode = dom.createText('<script>alert(1)</script>');
 const link = dom.createElement('a', { children: [textNode] });
 dom.setAttr(link, 'href', 'https://example.com?q=a b');
+
 
 const root = document.getElementById('app');
 dom.mount(root, link);
