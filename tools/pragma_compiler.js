@@ -30,7 +30,7 @@ function transformSource(source, filePath) {
       // Example:
       // const view = `<div>${userInput}</div>`;
       // => const view = secure`<div>${userInput}</div>`;
-      const transformed = lines[j].replace(/=\s*`([\s\S]*)`;?\s*$/, '= secure`$1`;');
+      const transformed = lines[j].replace(/=\s*`([^`]*)`;?\s*$/, '= secure`$1`;');
       if (transformed === lines[j]) {
         throw new Error(
           `${filePath}:${j + 1}: '${PRAGMA}' directive found but the following line is not a ` +
