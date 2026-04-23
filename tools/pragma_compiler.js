@@ -1,34 +1,50 @@
 #!/usr/bin/env node
-import fs from 'node:fs';
-import path from 'node:path';
+const fs = require('node:fs');
+const path = require('node:path');
 
-const PRAGMA = '#pragma covian secure';
+const PRAGMA = '// #pragma covian secure';
 
-function transformSource(source) {
+function transformSource(source, filePath) {
   const lines = source.split(/\r?\n/);
   const out = [];
-  let pending = false;
+  let i = 0;
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
 
     if (trimmed === PRAGMA) {
-      pending = true;
-      continue;
-    }
+      // Skip blank lines and comment lines between the pragma and the target statement.
+      let j = i + 1;
+      while (j < lines.length && /^\s*(\/\/.*)?$/.test(lines[j])) {
+        out.push(lines[j]);
+        j++;
+      }
 
-    if (pending) {
+      if (j >= lines.length) {
+        throw new Error(
+          `${filePath}:${i + 1}: '${PRAGMA}' found but no template-literal assignment follows.`
+        );
+      }
+
       // Convert plain template assignment to secure tagged template.
       // Example:
       // const view = `<div>${userInput}</div>`;
       // => const view = secure`<div>${userInput}</div>`;
-      const transformed = line.replace(/=\s*`([\s\S]*)`;?\s*$/, '= secure`$1`;');
+      const transformed = lines[j].replace(/=\s*`([\s\S]*)`;?\s*$/, '= secure`$1`;');
+      if (transformed === lines[j]) {
+        throw new Error(
+          `${filePath}:${j + 1}: '${PRAGMA}' directive found but the following line is not a ` +
+          'single-line template-literal assignment.'
+        );
+      }
+
       out.push(transformed);
-      pending = false;
+      i = j + 1;
       continue;
     }
 
-    out.push(line);
+    out.push(lines[i]);
+    i++;
   }
 
   return out.join('\n');
@@ -36,7 +52,7 @@ function transformSource(source) {
 
 function compileFile(inputPath, outputPath) {
   const source = fs.readFileSync(inputPath, 'utf8');
-  const transformed = transformSource(source);
+  const transformed = transformSource(source, inputPath);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, transformed, 'utf8');
 }

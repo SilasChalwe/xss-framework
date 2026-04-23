@@ -1,25 +1,40 @@
-# Covian Binary-Level Directive Architecture
+# Covian XSS Framework (Binary-Level Directive Architecture)
 
-## 1. Directive Model
-Covian uses a compiler-style directive in app source:
+## Abstract
+Covian XSS is a **zero-trust output encoding framework** that moves sanitization logic from mutable JavaScript code into a compiled WebAssembly module built from C++. Developers use a single directive-style API (`secure`) to encode dynamic values before rendering.
 
-```js
-#pragma covian secure
-const view = `<div>Results for: ${userInput}</div>`;
-```
+## Architecture Layers
+1. **Unsafe Layer (JavaScript App Layer)**
+   - Untrusted data enters from URL params, API responses, forms, and third-party sources.
+2. **Isolation Layer (C++ → WebAssembly Core)**
+   - Deterministic single-pass lexical encoding runs in Wasm linear memory.
+   - No DOM or `window` access from the core.
+3. **Directive Compiler Layer (optional)**
+   - `tools/pragma_compiler.js` rewrites `// #pragma covian secure` comment-directives to `secure` tagged-template calls at build time.
+4. **Directive Layer (JavaScript Tag Function)**
+   - Developer-facing one-line usage: `secure` tagged template literals.
 
-A small Covian compiler pass converts that to a secure tagged-template call.
+## Security Model
+- Primary control: output encoding for HTML text context.
+- Secondary controls (recommended in production):
+  - CSP (`script-src`, `require-trusted-types-for 'script'`)
+  - Trusted Types policies for dangerous sinks
+  - Input validation and server-side encoding where appropriate
 
-## 2. Layers
-1. **Unsafe Layer:** application JavaScript data flow.
-2. **Isolation Layer:** C++ sanitization engine compiled to WebAssembly.
-3. **Directive Compiler Layer:** pragma rewrite pass (`tools/pragma_compiler.js`).
+## Standards Alignment
+- OWASP XSS Prevention Cheat Sheet (contextual output encoding)
+- OWASP ASVS (V5, V8 controls relevant to output handling)
+- W3C WebAssembly security model
 
-## 3. Core engine
-`cpp/secure_core.cpp` exports:
-- `secure_transform`
-- `secure_transform_alloc`
-- `secure_free`
+## Build Pipeline
+- `cpp/secure_core.cpp` compiled by Emscripten.
+- Output artifacts:
+  - `js/secure_engine.js`
+  - `js/secure_engine.wasm`
+- Runtime directive in `js/secure-directive.js` calls exported C++ symbols via `ccall`.
 
-## 4. Runtime bridge
-`js/secure-directive.js` loads the generated Wasm module and applies `secure_transform` to every interpolation.
+## API Contract
+- `createSecureDirective(): Promise<(strings, ...values) => string>`
+- `secure_transform(const char*): const char*` — returns a pointer into an internal thread-local buffer; valid only until the next call. Callers must not store this pointer.
+- `secure_transform_alloc(const char*): char*` — returns a heap-allocated buffer the caller must free via `secure_free`.
+- `secure_free(char*)`
