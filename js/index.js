@@ -1,9 +1,4 @@
-import { createSecureDirective } from './secure-directive.js';
-
-export { createSecureDirective };
-
-export async function renderSecure(target, templateBuilder) {
-  const secure = await createSecureDirective();
-  const html = templateBuilder(secure);
-  target.innerHTML = html;
-}
+export { createDomApi } from './dom_api.js';
+export { hardenDomSinks } from './safe-dom.js';
+export { requireTrustedTypes } from './policy.js';
+export { initSecureEngine } from './secure_engine.js';

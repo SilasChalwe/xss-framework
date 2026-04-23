@@ -1,7 +1,11 @@
-import { createSecureDirective } from '../../js/secure-directive.js';
+import { createDomApi } from '../../js/index.js';
+import createWasmModule from '../../js/secure_engine.generated.js';
 
-const secure = await createSecureDirective();
+const dom = await createDomApi({ wasmFactory: createWasmModule });
 const userInput = new URLSearchParams(location.search).get('q') ?? '<img src=x onerror=alert(1) />';
 
-const view = secure`<div>Results for: ${userInput}</div>`;
-document.getElementById('app').innerHTML = view;
+const content = dom.createElement('div', {
+  children: [dom.createText(`Results for: ${userInput}`)],
+});
+
+dom.mount(document.getElementById('app'), content);
