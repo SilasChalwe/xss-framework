@@ -9,7 +9,9 @@ Covian XSS is a **zero-trust output encoding framework** that moves sanitization
 2. **Isolation Layer (C++ → WebAssembly Core)**
    - Deterministic single-pass lexical encoding runs in Wasm linear memory.
    - No DOM or `window` access from the core.
-3. **Directive Layer (JavaScript Tag Function)**
+3. **Directive Compiler Layer (optional)**
+   - `tools/pragma_compiler.js` rewrites `// #pragma covian secure` comment-directives to `secure` tagged-template calls at build time.
+4. **Directive Layer (JavaScript Tag Function)**
    - Developer-facing one-line usage: `secure` tagged template literals.
 
 ## Security Model
@@ -33,6 +35,6 @@ Covian XSS is a **zero-trust output encoding framework** that moves sanitization
 
 ## API Contract
 - `createSecureDirective(): Promise<(strings, ...values) => string>`
-- `secure_transform(const char*): const char*`
-- `secure_transform_alloc(const char*): char*`
+- `secure_transform(const char*): const char*` — returns a pointer into an internal thread-local buffer; valid only until the next call. Callers must not store this pointer.
+- `secure_transform_alloc(const char*): char*` — returns a heap-allocated buffer the caller must free via `secure_free`.
 - `secure_free(char*)`

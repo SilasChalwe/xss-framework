@@ -43,6 +43,10 @@ static std::string encode_html_text(const char* raw_data) {
 
 extern "C" {
 
+// Returns a pointer into a function-internal thread-local buffer. The
+// returned string is valid only until the next call to secure_transform on the
+// same thread. Callers must not store the returned pointer beyond immediate
+// use. For stable ownership, use secure_transform_alloc + secure_free instead.
 COVIAN_EXPORT const char* secure_transform(const char* raw_data) {
   static thread_local std::string buffer;
   buffer = covian::encode_html_text(raw_data);

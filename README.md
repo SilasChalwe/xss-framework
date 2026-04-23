@@ -24,12 +24,19 @@ scripts/
   build_wasm_docker.sh     # dockerized emcc build (no local emcc needed)
   test_native.sh           # native C++ test
 
+tools/
+  pragma_compiler.js       # rewrites `#pragma covian secure` directives
+
 docs/
   ARCHITECTURE.md          # architecture and standards mapping
 
 examples/browser/
   index.html
   main.js
+
+examples/pragma/
+  source.pragma.js         # example source with pragma directive
+  compiled.js              # compiled output
 ```
 
 ## Build Wasm
@@ -54,6 +61,20 @@ Both commands generate:
 ## Run native C++ test
 ```bash
 ./scripts/test_native.sh
+```
+
+## Pragma compiler workflow
+Write your source file with a `#pragma covian secure` comment before any template-literal assignment:
+
+```js
+// #pragma covian secure
+const view = `<div>Results for: ${userInput}</div>`;
+```
+
+Compile with the pragma compiler to rewrite it to a secure tagged-template call:
+
+```bash
+node tools/pragma_compiler.js examples/pragma/source.pragma.js examples/pragma/compiled.js
 ```
 
 ## Runtime Usage
