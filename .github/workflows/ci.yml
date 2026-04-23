@@ -13,6 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm install
+
       - name: Run native adversarial tests
         run: ./scripts/test_native.sh
 
@@ -21,5 +29,5 @@ jobs:
 
       - name: Verify Wasm build artifacts
         run: |
-          test -f js/secure_engine.js
+          test -f js/secure_engine.generated.js
           test -f js/secure_engine.wasm
