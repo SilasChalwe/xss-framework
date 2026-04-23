@@ -1,102 +1,55 @@
-# Covian XSS Framework
+# Covian Secure Rendering System
 
-Covian is a **C++ + WebAssembly security framework** that provides one-line XSS-safe rendering with an OpenMP-style directive experience.
+Covian is a **security-first rendering architecture** with deterministic C++ encoding in WebAssembly and a strict JavaScript DOM API that blocks unsafe sinks by design.
 
-```js
-const secure = await createSecureDirective();
-const html = secure`<div>Results for: ${userInput}</div>`;
+## Security Guarantees
+- No string-based HTML rendering API in default usage.
+- Unsafe DOM sinks are patched and blocked (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`).
+- Context-aware output encoding is enforced at the Wasm boundary:
+  - `encodeText` for HTML text context
+  - `encodeAttr` for HTML attribute context
+  - `encodeURL` for URL attributes with allowlist scheme validation
+- Trusted Types are mandatory; Covian fails closed when unsupported.
+
+## Architecture
+```text
+cpp/secure_core.cpp        # deterministic trusted encoding + validation core
+js/secure_engine.js        # Wasm bindings (encoding-only API)
+js/safe-dom.js             # unsafe sink hardening
+js/dom_api.js              # typed safe DOM primitives
+js/policy.js               # Trusted Types enforcement policy
 ```
 
-## Core Idea
-Instead of implementing sanitization in mutable JavaScript logic, Covian compiles a deterministic C++ sanitizer to WebAssembly and executes sanitization in isolated Wasm memory.
+## Safe API
+```js
+import { createDomApi } from './js/index.js';
+import createWasmModule from './js/secure_engine.generated.js'; // emcc output
 
-## Repository Structure
-```text
-cpp/
-  secure_core.cpp          # C++ sanitization engine exported to Wasm
+const dom = await createDomApi({ wasmFactory: createWasmModule });
 
-js/
-  secure-directive.js      # `secure` directive factory
-  index.js                 # package entry points
+const textNode = dom.createText('<script>alert(1)</script>');
+const link = dom.createElement('a', { children: [textNode] });
+dom.setAttr(link, 'href', 'https://example.com?q=a b');
 
-scripts/
-  build_wasm.sh            # local emcc build
-  build_wasm_docker.sh     # dockerized emcc build (no local emcc needed)
-  test_native.sh           # native C++ test
-
-tools/
-  pragma_compiler.js       # rewrites `#pragma covian secure` directives
-
-docs/
-  ARCHITECTURE.md          # architecture and standards mapping
-
-examples/browser/
-  index.html
-  main.js
-
-examples/pragma/
-  source.pragma.js         # example source with pragma directive
-  compiled.js              # compiled output
+const root = document.getElementById('app');
+dom.mount(root, link);
 ```
 
 ## Build Wasm
-### Option A: Local emcc
-Prerequisite: Emscripten SDK with `emcc` in PATH.
-
 ```bash
 ./scripts/build_wasm.sh
-```
-
-### Option B: Docker (fastest if you don't want local setup)
-Prerequisite: Docker.
-
-```bash
+# or
 ./scripts/build_wasm_docker.sh
 ```
 
-Both commands generate:
-- `js/secure_engine.js`
-- `js/secure_engine.wasm`
-
-## Run native C++ test
+## Native adversarial tests
 ```bash
 ./scripts/test_native.sh
 ```
 
-## Pragma compiler workflow
-Write your source file with a `#pragma covian secure` comment before any template-literal assignment:
-
-```js
-// #pragma covian secure
-const view = `<div>Results for: ${userInput}</div>`;
-```
-
-Compile with the pragma compiler to rewrite it to a secure tagged-template call:
-
-```bash
-node tools/pragma_compiler.js examples/pragma/source.pragma.js examples/pragma/compiled.js
-```
-
-## Runtime Usage
-```js
-import { createSecureDirective } from './js/secure-directive.js';
-
-const secure = await createSecureDirective();
-const userInput = getUntrustedInput();
-
-const view = secure`<div>Results for: ${userInput}</div>`;
-document.body.innerHTML = view;
-```
-
-## Exported C++ Functions
-- `secure_transform(const char*) -> const char*`
-- `secure_transform_alloc(const char*) -> char*`
-- `secure_free(char*)`
-
-## Security Notes
-- Current core is for **HTML text-context escaping**.
-- For full application security, pair with CSP + Trusted Types and context-specific rendering controls.
-- Do not render untrusted data into script/style/URL contexts without dedicated handling.
+## Notes
+- `js/secure_engine.js` in source control is the runtime binding layer. The Emscripten-generated module should be supplied as `wasmFactory` at app startup.
+- Blocked URLs resolve to `about:invalid#covian-blocked-url`.
 
 ## License
-MIT.
+MIT
