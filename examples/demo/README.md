@@ -24,7 +24,7 @@ Build the WebAssembly engine from the repository root first:
 ./scripts/build_wasm.sh
 ```
 
-This generates `js/secure_engine.generated.js` and `js/secure_engine.wasm`.
+This generates `js/secure_engine.generated.js` and `js/secure_engine.generated.wasm`.
 
 ## Running the demo
 
