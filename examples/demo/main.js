@@ -111,7 +111,7 @@ const urlSamples = [
   { label: 'javascript:alert(1)',                                         input: 'javascript:alert(1)' },
   { label: 'data:text/html,<h1>hi</h1>',                                  input: 'data:text/html,<h1>hi</h1>' },
   { label: 'vbscript:MsgBox(1)',                                          input: 'vbscript:MsgBox(1)' },
-  { label: 'https://github.com/SilasChalwe/xss-framework (with space)',   input: 'https://github.com/SilasChalwe/xss-framework search' },
+  { label: 'https://github.com/SilasChalwe/xss-framework search (space in URL)',   input: 'https://github.com/SilasChalwe/xss-framework search' },
   { label: 'https://owasp.org/?q=<script>xss</script>',                  input: 'https://owasp.org/?q=<script>xss</script>' },
   { label: '/relative/path?q=hello world',                                input: '/relative/path?q=hello world' },
   { label: '#anchor',                                                     input: '#anchor' },
