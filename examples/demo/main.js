@@ -18,39 +18,23 @@ import createWasmModule from '../../js/secure_engine.generated.js';
 
 // Source-controlled JS modules — no build step required for these.
 import { createDomApi } from '../../js/dom_api.js';
-import { initSecureEngine } from '../../js/secure_engine.js';
 
 async function bootstrap() {
-  let dom = null;
-  let engine = null;
-  let compatibilityMessage = '';
-
-  // Try full Covian mode first (safe DOM + sink hardening + Trusted Types).
-  try {
-    dom = await createDomApi({ wasmFactory: createWasmModule });
-    engine = dom;
-  } catch (err) {
-    // Fallback mode for browsers missing Trusted Types support:
-    // keep encoding APIs interactive so the demo is still useful.
-    compatibilityMessage = err.message;
-    engine = await initSecureEngine({ wasmFactory: createWasmModule });
-  }
-
+  // Create the full safe DOM API (this also initializes Wasm, calls
+  // hardenDomSinks and requireTrustedTypes internally).
+  const dom = await createDomApi({ wasmFactory: createWasmModule });
   clearTimeout(slowLoadTimer);
 
   // Reveal the UI.
   document.getElementById('loading').remove();
-  document.getElementById('app').hidden = false;
-  if (!dom) {
-    document.getElementById('compat-note').hidden = false;
-  }
+  document.getElementById('app').style.display = 'block';
 
   // Encoding playground — update output fields on every keystroke.
   function updateEncoding(value) {
-    document.getElementById('out-text').textContent = engine.encodeText(value);
-    document.getElementById('out-attr').textContent = engine.encodeAttr(value);
-    document.getElementById('out-url').textContent  = engine.encodeURL(value);
-    document.getElementById('out-utf8').textContent = engine.validateUTF8(value)
+    document.getElementById('out-text').textContent = dom.encodeText(value);
+    document.getElementById('out-attr').textContent = dom.encodeAttr(value);
+    document.getElementById('out-url').textContent  = dom.encodeURL(value);
+    document.getElementById('out-utf8').textContent = dom.validateUTF8(value)
       ? 'valid UTF-8'
       : 'invalid UTF-8';
   }
@@ -64,68 +48,55 @@ async function bootstrap() {
   const userQuery = new URLSearchParams(location.search).get('q')
     ?? '<img src=x onerror=alert(1) />';
 
-  const sinkResults = document.getElementById('sink-results');
-  const domOutput = document.getElementById('dom-output');
+  const heading = dom.createElement('strong', {
+    children: [dom.createText('Covian safe DOM output')],
+  });
 
-  if (dom) {
-    const heading = dom.createElement('strong', {
-      children: [dom.createText('Covian safe DOM output')],
-    });
+  const queryText = dom.createText(`Input: ${userQuery}`);
 
-    const queryText = dom.createText(`Input: ${userQuery}`);
+  const link = dom.createElement('a', {
+    attrs: { href: 'https://github.com/SilasChalwe/xss-framework', target: '_blank' },
+    children: [dom.createText('View source on GitHub')],
+  });
 
-    const link = dom.createElement('a', {
-      attrs: { href: 'https://github.com/SilasChalwe/xss-framework', target: '_blank' },
-      children: [dom.createText('View source on GitHub')],
-    });
+  const card = dom.createElement('div', {
+    attrs: { class: 'covian-card' },
+    children: [
+      heading,
+      dom.createElement('br'),
+      queryText,
+      dom.createElement('br'),
+      link,
+    ],
+  });
 
-    const card = dom.createElement('div', {
-      attrs: { class: 'covian-card' },
-      children: [
-        heading,
-        dom.createElement('br'),
-        queryText,
-        dom.createElement('br'),
-        link,
-      ],
-    });
-
-    dom.mount(domOutput, card);
-  } else {
-    domOutput.textContent = `Safe DOM API disabled in this browser: ${compatibilityMessage}`;
-    domOutput.style.color = '#991b1b';
-  }
+  dom.mount(document.getElementById('dom-output'), card);
 
   // Unsafe sink hardening — attempt each blocked sink and display the result.
-  if (!dom) {
+  const sinkResults = document.getElementById('sink-results');
+
+  function trySink(label, fn) {
     const row = document.createElement('div');
-    row.className = 'sink-result error';
-    row.textContent = 'Sink hardening unavailable because Trusted Types is not supported in this browser.';
-    sinkResults.appendChild(row);
-  } else {
-    function trySink(label, fn) {
-      const row = document.createElement('div');
-      try {
-        fn();
-        // If we reach here, the sink was NOT blocked (unexpected after hardenDomSinks).
-        row.className = 'sink-result error';
-        row.textContent = `FAIL: ${label} - not blocked (unexpected)`;
-      } catch (err) {
-        row.className = 'sink-result ok';
-        row.textContent = `BLOCKED: ${label} - ${err.message}`;
-      }
-      sinkResults.appendChild(row);
+    try {
+      fn();
+      // If we reach here, the sink was NOT blocked (unexpected after hardenDomSinks).
+      row.className = 'sink-result error';
+      row.textContent = `FAIL: ${label} - not blocked (unexpected)`;
+    } catch (err) {
+      row.className = 'sink-result ok';
+      row.textContent = `BLOCKED: ${label} - ${err.message}`;
     }
-
-    const probe = document.createElement('div');
-
-    trySink('element.innerHTML', () => { probe.innerHTML = '<b>injected</b>'; });
-    trySink('element.outerHTML', () => { probe.outerHTML = '<b>injected</b>'; });
-    trySink('element.insertAdjacentHTML', () => {
-      probe.insertAdjacentHTML('beforeend', '<b>injected</b>');
-    });
-    trySink('document.write', () => { document.write('<b>injected</b>'); });
+    sinkResults.appendChild(row);
   }
+
+  const probe = document.createElement('div');
+
+  trySink('element.innerHTML', () => { probe.innerHTML = '<b>injected</b>'; });
+  trySink('element.outerHTML', () => { probe.outerHTML = '<b>injected</b>'; });
+  trySink('element.insertAdjacentHTML', () => {
+    probe.insertAdjacentHTML('beforeend', '<b>injected</b>');
+  });
+  trySink('document.write', () => { document.write('<b>injected</b>'); });
 
   // URL encoding table — shows which schemes are blocked and which are allowed.
   const BLOCKED = 'about:invalid#covian-blocked-url';
@@ -144,7 +115,7 @@ async function bootstrap() {
   const tbody = document.getElementById('url-tbody');
 
   for (const { label, input } of urlSamples) {
-    const encoded = engine.encodeURL(input);
+    const encoded = dom.encodeURL(input);
     const isBlocked = encoded === BLOCKED;
 
     const tr = document.createElement('tr');
