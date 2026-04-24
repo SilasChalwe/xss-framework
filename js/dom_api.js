@@ -11,7 +11,10 @@ function ensureNode(value) {
 }
 
 export async function createDomApi(options = {}) {
-  const engine = await initSecureEngine({ wasmFactory: options.wasmFactory });
+  const engine = await initSecureEngine({
+    wasmFactory: options.wasmFactory,
+    wasmModuleOptions: options.wasmModuleOptions,
+  });
   hardenDomSinks();
   const ttPolicy = requireTrustedTypes();
 
@@ -69,6 +72,9 @@ export async function createDomApi(options = {}) {
     setText,
     setAttr,
     mount,
+    encodeText: engine.encodeText,
+    encodeAttr: engine.encodeAttr,
+    encodeURL: engine.encodeURL,
     validateUTF8: engine.validateUTF8,
   });
 }
