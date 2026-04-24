@@ -30,8 +30,8 @@ js/policy.js               # Trusted Types enforcement policy
 
 Covian apps are still regular web apps, but they should be run over **HTTP/HTTPS** in development.
 
-- ✅ **Recommended:** run a local static server (Node, npm, Python, etc.)
-- ⚠️ **Not recommended:** opening `index.html` via `file://`
+- **Recommended:** run a local static server (Node, npm, Python, etc.)
+- **Not recommended:** opening `index.html` via `file://`
 
 Why a server is required in practice:
 - ES module loading is more reliable and standards-compliant over HTTP.
