@@ -1,0 +1,36 @@
+name: covian-release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run native adversarial tests
+        run: ./scripts/test_native.sh
+
+      - name: Build Wasm via Dockerized Emscripten
+        run: ./scripts/build_wasm_docker.sh
+
+      - name: Verify Wasm build artifacts
+        run: |
+          test -f js/secure_engine.generated.js
+          test -f js/secure_engine.generated.wasm
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            js/secure_engine.generated.js
+            js/secure_engine.generated.wasm
+          generate_release_notes: true
