@@ -22,4 +22,4 @@ emcc "$ROOT_DIR/cpp/secure_core.cpp" \
   -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString"]' \
   -o "$OUT_DIR/secure_engine.generated.js"
 
-echo "Built: $OUT_DIR/secure_engine.generated.js and $OUT_DIR/secure_engine.wasm"
+echo "Built: $OUT_DIR/secure_engine.generated.js and $OUT_DIR/secure_engine.generated.wasm"

@@ -30,4 +30,4 @@ jobs:
       - name: Verify Wasm build artifacts
         run: |
           test -f js/secure_engine.generated.js
-          test -f js/secure_engine.wasm
+          test -f js/secure_engine.generated.wasm

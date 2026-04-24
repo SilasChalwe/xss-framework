@@ -24,4 +24,4 @@ docker run --rm \
   -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","UTF8ToString"]' \
   -o /src/js/secure_engine.generated.js
 
-echo "Built with Docker: js/secure_engine.generated.js and js/secure_engine.wasm"
+echo "Built with Docker: js/secure_engine.generated.js and js/secure_engine.generated.wasm"

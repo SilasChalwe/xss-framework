@@ -1,3 +1,3 @@
 .build/
 js/secure_engine.generated.js
-js/secure_engine.wasm
+js/secure_engine.generated.wasm
