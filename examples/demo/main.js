@@ -23,8 +23,6 @@ import { createDomApi } from '../../js/dom_api.js';
 import { hardenDomSinks } from '../../js/safe-dom.js';
 import { requireTrustedTypes } from '../../js/policy.js';
 
-// ── 1. Boot ──────────────────────────────────────────────────────────────────
-
 // Initialise the Wasm engine first.
 const engine = await initSecureEngine({ wasmFactory: createWasmModule });
 
@@ -33,27 +31,23 @@ const engine = await initSecureEngine({ wasmFactory: createWasmModule });
 // Types are active from this point on).
 const dom = await createDomApi({ wasmFactory: createWasmModule });
 
-// ── 2. Reveal the UI ─────────────────────────────────────────────────────────
-
+// Reveal the UI.
 document.getElementById('loading').remove();
 document.getElementById('app').style.display = 'block';
 
-// ── 3. Encoding playground ───────────────────────────────────────────────────
-
+// Encoding playground — update output fields on every keystroke.
 function updateEncoding(value) {
   document.getElementById('out-text').textContent = engine.encodeText(value);
   document.getElementById('out-attr').textContent = engine.encodeAttr(value);
   document.getElementById('out-url').textContent  = engine.encodeURL(value);
   document.getElementById('out-utf8').textContent = engine.validateUTF8(value)
-    ? '✓ valid UTF-8'
-    : '✗ invalid UTF-8';
+    ? 'valid UTF-8'
+    : 'invalid UTF-8';
 }
 
 const inputEl = document.getElementById('user-input');
 updateEncoding(inputEl.value);
 inputEl.addEventListener('input', (e) => updateEncoding(e.target.value));
-
-// ── 4. Safe DOM API demo ─────────────────────────────────────────────────────
 
 // Build a card element using only typed DOM primitives — no innerHTML, no
 // template strings for HTML.
@@ -84,8 +78,7 @@ const card = dom.createElement('div', {
 
 dom.mount(document.getElementById('dom-output'), card);
 
-// ── 5. Unsafe sink hardening demo ────────────────────────────────────────────
-
+// Unsafe sink hardening — attempt each blocked sink and display the result.
 const sinkResults = document.getElementById('sink-results');
 
 function trySink(label, fn) {
@@ -94,10 +87,10 @@ function trySink(label, fn) {
     fn();
     // If we reach here, the sink was NOT blocked (unexpected after hardenDomSinks).
     row.className = 'sink-result error';
-    row.textContent = `✗ ${label}: NOT blocked (unexpected)`;
+    row.textContent = `FAIL: ${label} - not blocked (unexpected)`;
   } catch (err) {
     row.className = 'sink-result ok';
-    row.textContent = `✓ ${label}: blocked — ${err.message}`;
+    row.textContent = `BLOCKED: ${label} - ${err.message}`;
   }
   sinkResults.appendChild(row);
 }
@@ -111,19 +104,18 @@ trySink('element.insertAdjacentHTML', () => {
 });
 trySink('document.write', () => { document.write('<b>injected</b>'); });
 
-// ── 6. URL encoding table ────────────────────────────────────────────────────
-
+// URL encoding table — shows which schemes are blocked and which are allowed.
 const BLOCKED = 'about:invalid#covian-blocked-url';
 
 const urlSamples = [
-  { label: 'javascript:alert(1)',              input: 'javascript:alert(1)' },
-  { label: 'data:text/html,<h1>hi</h1>',       input: 'data:text/html,<h1>hi</h1>' },
-  { label: 'vbscript:MsgBox(1)',               input: 'vbscript:MsgBox(1)' },
-  { label: 'https://example.com/a b',          input: 'https://example.com/a b' },
-  { label: 'http://example.com/?q=<script>',   input: 'http://example.com/?q=<script>' },
-  { label: '/relative/path?q=hello world',     input: '/relative/path?q=hello world' },
-  { label: '#anchor',                          input: '#anchor' },
-  { label: '  javascript:alert(1)  (trimmed)', input: '  javascript:alert(1)  ' },
+  { label: 'javascript:alert(1)',                                         input: 'javascript:alert(1)' },
+  { label: 'data:text/html,<h1>hi</h1>',                                  input: 'data:text/html,<h1>hi</h1>' },
+  { label: 'vbscript:MsgBox(1)',                                          input: 'vbscript:MsgBox(1)' },
+  { label: 'https://github.com/SilasChalwe/xss-framework search (space in URL)',   input: 'https://github.com/SilasChalwe/xss-framework search' },
+  { label: 'https://owasp.org/?q=<script>xss</script>',                  input: 'https://owasp.org/?q=<script>xss</script>' },
+  { label: '/relative/path?q=hello world',                                input: '/relative/path?q=hello world' },
+  { label: '#anchor',                                                     input: '#anchor' },
+  { label: '  javascript:alert(1)  (trimmed)',                            input: '  javascript:alert(1)  ' },
 ];
 
 const tbody = document.getElementById('url-tbody');
@@ -141,7 +133,7 @@ for (const { label, input } of urlSamples) {
   tdEncoded.textContent = encoded;
 
   const tdVerdict = document.createElement('td');
-  tdVerdict.textContent = isBlocked ? '🚫 blocked' : '✓ allowed';
+  tdVerdict.textContent = isBlocked ? 'blocked' : 'allowed';
   tdVerdict.className = isBlocked ? 'verdict-blocked' : 'verdict-safe';
 
   tr.appendChild(tdInput);

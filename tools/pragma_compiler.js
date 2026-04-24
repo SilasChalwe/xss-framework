@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const fs = require('node:fs');
-const path = require('node:path');
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 const PRAGMA = '// #pragma covian secure';
 
@@ -51,10 +51,10 @@ function transformSource(source, filePath) {
 }
 
 function compileFile(inputPath, outputPath) {
-  const source = fs.readFileSync(inputPath, 'utf8');
+  const source = readFileSync(inputPath, 'utf8');
   const transformed = transformSource(source, inputPath);
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, transformed, 'utf8');
+  mkdirSync(dirname(outputPath), { recursive: true });
+  writeFileSync(outputPath, transformed, 'utf8');
 }
 
 const [, , inputPath, outputPath] = process.argv;

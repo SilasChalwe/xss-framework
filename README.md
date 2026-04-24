@@ -111,7 +111,7 @@ const dom = await createDomApi({ wasmFactory: createWasmModule });
 
 const textNode = dom.createText('<script>alert(1)</script>');
 const link = dom.createElement('a', { children: [textNode] });
-dom.setAttr(link, 'href', 'https://example.com?q=a b');
+dom.setAttr(link, 'href', 'https://github.com/SilasChalwe/xss-framework?q=a b');
 
 
 const root = document.getElementById('app');
