@@ -11,7 +11,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types covian-policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; require-trusted-types-for 'script'; trusted-types covian-policy"
     />
     <title>Covian — XSS Security Framework Demo</title>
     <style>
@@ -98,7 +98,7 @@
       .sink-result.error { background: #fee2e2; color: #991b1b; }
 
       #loading { color: #888; font-style: italic; margin-top: 1rem; }
-      #app { display: none; }
+      #app[hidden] { display: none; }
 
       table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
       th, td { padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid #eee; }
@@ -117,8 +117,11 @@
     </p>
 
     <p id="loading">Loading WebAssembly engine…</p>
+    <p id="compat-note" hidden style="margin-top:0.5rem;color:#92400e;background:#fef3c7;padding:0.6rem 0.75rem;border-radius:6px;">
+      Compatibility mode: encoding APIs are active, but Trusted Types features are unavailable in this browser.
+    </p>
 
-    <div id="app">
+    <div id="app" hidden>
       <!-- Encoding playground -->
       <h2>Context-aware encoding</h2>
       <div class="panel">
@@ -134,6 +137,17 @@
           <dt>encodeURL</dt><dd id="out-url">—</dd>
           <dt>validateUTF8</dt><dd id="out-utf8">—</dd>
         </dl>
+        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <label for="api-method" style="margin:0">Run API method:</label>
+          <select id="api-method">
+            <option value="encodeText">encodeText</option>
+            <option value="encodeAttr">encodeAttr</option>
+            <option value="encodeURL">encodeURL</option>
+            <option value="validateUTF8">validateUTF8</option>
+          </select>
+          <button id="run-api-btn" type="button">Run</button>
+        </div>
+        <pre id="run-api-output" style="margin-top:0.6rem;background:#111827;color:#e5e7eb;padding:0.6rem;border-radius:6px;overflow:auto;">{ "result": "—" }</pre>
       </div>
 
       <!-- Safe DOM API -->
@@ -150,17 +164,29 @@
       <h2>Unsafe DOM sink hardening — <code>hardenDomSinks()</code></h2>
       <div class="panel">
         <p style="margin-top:0">
-          After <code>hardenDomSinks()</code> is called, writing to
-          <code>innerHTML</code> / <code>outerHTML</code> or calling
-          <code>insertAdjacentHTML</code> / <code>document.write</code>
-          throws a security violation. Results:
+          Choose a sink and payload, then run it. In secure mode these should be blocked.
         </p>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <select id="sink-select">
+            <option value="innerHTML">element.innerHTML</option>
+            <option value="outerHTML">element.outerHTML</option>
+            <option value="insertAdjacentHTML">element.insertAdjacentHTML</option>
+            <option value="document.write">document.write</option>
+          </select>
+          <input id="sink-payload" type="text" value="<b>injected</b>" />
+          <button id="run-sink-btn" type="button">Run sink test</button>
+        </div>
         <div id="sink-results"></div>
       </div>
 
       <!-- URL encoding table -->
       <h2>URL encoding — blocked vs. allowed</h2>
       <div class="panel">
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.8rem;">
+          <input id="url-input" type="text" value="javascript:alert(1)" />
+          <button id="run-url-btn" type="button">Test URL</button>
+          <button id="clear-url-btn" type="button">Clear table</button>
+        </div>
         <table>
           <thead>
             <tr>
@@ -174,6 +200,7 @@
       </div>
     </div>
 
+    <noscript>This demo requires JavaScript enabled.</noscript>
     <script type="module" src="./main.js"></script>
   </body>
 </html>

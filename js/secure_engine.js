@@ -14,17 +14,21 @@
  */
 
 /**
- * @param {{ wasmFactory: function }=} options
+ * @param {{ wasmFactory: function, wasmModuleOptions?: object }=} options
  * @returns {Promise<{ encodeText: function, encodeAttr: function, encodeURL: function, validateUTF8: function }>}
  */
-export async function initSecureEngine({ wasmFactory }) {
+export async function initSecureEngine({ wasmFactory, wasmModuleOptions = {} }) {
   if (typeof wasmFactory !== 'function') {
     throw new Error(
       'Covian: wasmFactory must be the default export of secure_engine.generated.js'
     );
   }
 
-  const wasm = await wasmFactory();
+  const defaultLocateFile = (path) => new URL(path, import.meta.url).toString();
+  const wasm = await wasmFactory({
+    ...wasmModuleOptions,
+    locateFile: wasmModuleOptions.locateFile ?? defaultLocateFile,
+  });
 
   const encodeText = wasm.cwrap('encodeText', 'string', ['string']);
   const encodeAttr = wasm.cwrap('encodeAttr', 'string', ['string']);
