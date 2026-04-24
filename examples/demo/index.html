@@ -116,11 +116,11 @@
       UTF-8 validation, unsafe DOM sink hardening, Trusted Types, and the safe DOM builder.
     </p>
 
-    <p id="loading">⏳ Loading WebAssembly engine…</p>
+    <p id="loading">Loading WebAssembly engine…</p>
 
     <div id="app">
-      <!-- 1. Encoding playground -->
-      <h2>1. Context-aware encoding</h2>
+      <!-- Encoding playground -->
+      <h2>Context-aware encoding</h2>
       <div class="panel">
         <label for="user-input">Paste any payload (e.g. XSS, JavaScript URL, raw HTML):</label>
         <input
@@ -136,8 +136,8 @@
         </dl>
       </div>
 
-      <!-- 2. Safe DOM API -->
-      <h2>2. Safe DOM API — <code>createDomApi()</code></h2>
+      <!-- Safe DOM API -->
+      <h2>Safe DOM API — <code>createDomApi()</code></h2>
       <div class="panel">
         <p style="margin-top:0">
           The element below is built with Covian's typed DOM primitives.
@@ -146,8 +146,8 @@
         <div id="dom-output"></div>
       </div>
 
-      <!-- 3. Unsafe sink hardening -->
-      <h2>3. Unsafe DOM sink hardening — <code>hardenDomSinks()</code></h2>
+      <!-- Unsafe sink hardening -->
+      <h2>Unsafe DOM sink hardening — <code>hardenDomSinks()</code></h2>
       <div class="panel">
         <p style="margin-top:0">
           After <code>hardenDomSinks()</code> is called, writing to
@@ -158,8 +158,8 @@
         <div id="sink-results"></div>
       </div>
 
-      <!-- 4. URL encoding table -->
-      <h2>4. URL encoding — blocked vs. allowed</h2>
+      <!-- URL encoding table -->
+      <h2>URL encoding — blocked vs. allowed</h2>
       <div class="panel">
         <table>
           <thead>
