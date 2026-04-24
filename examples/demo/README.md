@@ -28,14 +28,24 @@ This generates `js/secure_engine.generated.js` and `js/secure_engine.generated.w
 
 ## Running the demo
 
-Serve the repository root with any static server (import maps and ES modules require HTTP — `file://` will not work):
+Serve the repository root with any static server (`file://` is not supported for this demo):
 
 ```bash
-# from the repository root
+# from the repository root (Node/npm)
 npx serve .
+
+# alternatively (Python)
+python3 -m http.server 4173
 ```
 
-Then open **http://localhost:3000/examples/demo/**.
+Then open:
+- **http://localhost:3000/examples/demo/** (with `npx serve`)
+- **http://localhost:4173/examples/demo/** (with Python server)
+
+Why you should run a server:
+- the demo uses ES module scripts (`type="module"`)
+- WebAssembly is loaded as a separate asset
+- CSP + Trusted Types checks are designed for normal HTTP/HTTPS origins
 
 > The CSP in `index.html` enforces `require-trusted-types-for 'script'`, so
 > the demo must be opened over HTTP/HTTPS.

@@ -26,6 +26,33 @@ js/policy.js               # Trusted Types enforcement policy
 
 ## How to use Covian in your code
 
+## Running apps built with Covian (important)
+
+Covian apps are still regular web apps, but they should be run over **HTTP/HTTPS** in development.
+
+- ✅ **Recommended:** run a local static server (Node, npm, Python, etc.)
+- ⚠️ **Not recommended:** opening `index.html` via `file://`
+
+Why a server is required in practice:
+- ES module loading is more reliable and standards-compliant over HTTP.
+- The Wasm module (`secure_engine.generated.wasm`) is fetched by the generated loader and can fail on `file://` origins in many browsers.
+- Covian examples use strict CSP + Trusted Types, which are intended to run in normal web origins.
+
+Quick start (from repository root):
+
+```bash
+# Option A: Node/npm
+npx serve .
+
+# Option B: Python
+python3 -m http.server 4173
+```
+
+Then open one of these:
+- `http://localhost:3000/examples/browser/` (if using `npx serve`)
+- `http://localhost:4173/examples/browser/` (if using Python)
+- `http://localhost:3000/examples/demo/` or `http://localhost:4173/examples/demo/`
+
 ### 1) Plain HTML + JavaScript
 Use a module script and build your UI from Covian DOM primitives.
 
@@ -57,6 +84,13 @@ const card = dom.createElement('section', {
 });
 
 dom.mount(document.getElementById('app'), card);
+```
+
+If you installed Covian from npm in another project, use package imports instead:
+
+```js
+import { createDomApi } from 'covian';
+import createWasmModule from 'covian/js/secure_engine.generated.js';
 ```
 
 ### 2) Existing JavaScript app (no framework)
@@ -105,7 +139,7 @@ export function SecureWidget({ userInput }) {
 ## Safe API
 ```js
 import { createDomApi } from './js/index.js';
-import createWasmModule from './js/secure_engine.generated.js'; // emcc output
+import createWasmModule from './js/secure_engine.generated.js'; // Emscripten output
 
 const dom = await createDomApi({ wasmFactory: createWasmModule });
 
