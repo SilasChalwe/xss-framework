@@ -28,13 +28,3 @@ Open:
 - `http://localhost:4173/examples/browser/` (with Python)
 
 > Do not open `index.html` directly with `file://`; module/Wasm loading is not reliable there.
-
-## What you should see
-
-You should see one line rendered on the page:
-
-`Results for: <your query value>`
-
-If no `?q=` parameter is provided, the default payload string is shown safely as text.
-
-If startup fails, the page now shows a clear error message instead of a blank screen.

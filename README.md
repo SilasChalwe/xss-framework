@@ -30,8 +30,8 @@ js/policy.js               # Trusted Types enforcement policy
 
 Covian apps are still regular web apps, but they should be run over **HTTP/HTTPS** in development.
 
-- ✅ **Recommended:** run a local static server (Node, npm, Python, etc.)
-- ⚠️ **Not recommended:** opening `index.html` via `file://`
+- **Recommended:** run a local static server (Node, npm, Python, etc.)
+- **Not recommended:** opening `index.html` via `file://`
 
 Why a server is required in practice:
 - ES module loading is more reliable and standards-compliant over HTTP.
@@ -52,10 +52,6 @@ Then open one of these:
 - `http://localhost:3000/examples/browser/` (if using `npx serve`)
 - `http://localhost:4173/examples/browser/` (if using Python)
 - `http://localhost:3000/examples/demo/` or `http://localhost:4173/examples/demo/`
-
-If the page appears blank, open DevTools Console/Network:
-- verify `js/secure_engine.generated.wasm` is loading (not 404)
-- verify you are using `http://...` and not `file://...`
 
 ### 1) Plain HTML + JavaScript
 Use a module script and build your UI from Covian DOM primitives.

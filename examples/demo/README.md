@@ -47,15 +47,5 @@ Why you should run a server:
 - WebAssembly is loaded as a separate asset
 - CSP + Trusted Types checks are designed for normal HTTP/HTTPS origins
 
-## What you should see
-
-When healthy, the page should:
-- replace **"Loading WebAssembly engine…"** with the full demo panels
-- fill `encodeText`, `encodeAttr`, `encodeURL`, and `validateUTF8` outputs
-- populate sink-hardening and URL verdict sections
-
-If loading never completes, open DevTools → Network and confirm
-`/js/secure_engine.generated.wasm` returns **HTTP 200**.
-
 > The CSP in `index.html` enforces `require-trusted-types-for 'script'`, so
 > the demo must be opened over HTTP/HTTPS.
