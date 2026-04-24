@@ -4,11 +4,11 @@ A full-featured demonstration of the [Covian](../../README.md) XSS-prevention fr
 
 | Feature | API |
 |---|---|
-| Wasm encoding engine | `initSecureEngine` |
-| HTML text encoding | `engine.encodeText()` |
-| HTML attribute encoding | `engine.encodeAttr()` |
-| URL encoding / blocking | `engine.encodeURL()` |
-| UTF-8 validation | `engine.validateUTF8()` |
+| Wasm encoding engine | `createDomApi()` (internally initializes engine) |
+| HTML text encoding | `dom.encodeText()` |
+| HTML attribute encoding | `dom.encodeAttr()` |
+| URL encoding / blocking | `dom.encodeURL()` |
+| UTF-8 validation | `dom.validateUTF8()` |
 | Safe DOM builder | `createDomApi()` → `createElement`, `createText`, `setAttr`, `mount` |
 | Unsafe sink hardening | `hardenDomSinks()` |
 | Trusted Types policy | `requireTrustedTypes()` |
