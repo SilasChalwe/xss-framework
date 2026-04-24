@@ -137,6 +137,17 @@
           <dt>encodeURL</dt><dd id="out-url">—</dd>
           <dt>validateUTF8</dt><dd id="out-utf8">—</dd>
         </dl>
+        <div style="margin-top:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <label for="api-method" style="margin:0">Run API method:</label>
+          <select id="api-method">
+            <option value="encodeText">encodeText</option>
+            <option value="encodeAttr">encodeAttr</option>
+            <option value="encodeURL">encodeURL</option>
+            <option value="validateUTF8">validateUTF8</option>
+          </select>
+          <button id="run-api-btn" type="button">Run</button>
+        </div>
+        <pre id="run-api-output" style="margin-top:0.6rem;background:#111827;color:#e5e7eb;padding:0.6rem;border-radius:6px;overflow:auto;">{ "result": "—" }</pre>
       </div>
 
       <!-- Safe DOM API -->
@@ -153,17 +164,29 @@
       <h2>Unsafe DOM sink hardening — <code>hardenDomSinks()</code></h2>
       <div class="panel">
         <p style="margin-top:0">
-          After <code>hardenDomSinks()</code> is called, writing to
-          <code>innerHTML</code> / <code>outerHTML</code> or calling
-          <code>insertAdjacentHTML</code> / <code>document.write</code>
-          throws a security violation. Results:
+          Choose a sink and payload, then run it. In secure mode these should be blocked.
         </p>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <select id="sink-select">
+            <option value="innerHTML">element.innerHTML</option>
+            <option value="outerHTML">element.outerHTML</option>
+            <option value="insertAdjacentHTML">element.insertAdjacentHTML</option>
+            <option value="document.write">document.write</option>
+          </select>
+          <input id="sink-payload" type="text" value="<b>injected</b>" />
+          <button id="run-sink-btn" type="button">Run sink test</button>
+        </div>
         <div id="sink-results"></div>
       </div>
 
       <!-- URL encoding table -->
       <h2>URL encoding — blocked vs. allowed</h2>
       <div class="panel">
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.8rem;">
+          <input id="url-input" type="text" value="javascript:alert(1)" />
+          <button id="run-url-btn" type="button">Test URL</button>
+          <button id="clear-url-btn" type="button">Clear table</button>
+        </div>
         <table>
           <thead>
             <tr>

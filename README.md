@@ -53,7 +53,7 @@ Then open one of these:
 - `http://localhost:4173/examples/browser/` (if using Python)
 - `http://localhost:3000/examples/demo/` or `http://localhost:4173/examples/demo/`
 
-### 1) Plain HTML + JavaScript
+8### 1) Plain HTML + JavaScript
 Use a module script and build your UI from Covian DOM primitives.
 
 ```html
