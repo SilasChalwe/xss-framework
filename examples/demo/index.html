@@ -11,7 +11,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types covian-policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; require-trusted-types-for 'script'; trusted-types covian-policy"
     />
     <title>Covian — XSS Security Framework Demo</title>
     <style>
@@ -98,7 +98,7 @@
       .sink-result.error { background: #fee2e2; color: #991b1b; }
 
       #loading { color: #888; font-style: italic; margin-top: 1rem; }
-      #app { display: none; }
+      #app[hidden] { display: none; }
 
       table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
       th, td { padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid #eee; }
@@ -117,8 +117,11 @@
     </p>
 
     <p id="loading">Loading WebAssembly engine…</p>
+    <p id="compat-note" hidden style="margin-top:0.5rem;color:#92400e;background:#fef3c7;padding:0.6rem 0.75rem;border-radius:6px;">
+      Compatibility mode: encoding APIs are active, but Trusted Types features are unavailable in this browser.
+    </p>
 
-    <div id="app">
+    <div id="app" hidden>
       <!-- Encoding playground -->
       <h2>Context-aware encoding</h2>
       <div class="panel">
@@ -174,6 +177,7 @@
       </div>
     </div>
 
+    <noscript>This demo requires JavaScript enabled.</noscript>
     <script type="module" src="./main.js"></script>
   </body>
 </html>
