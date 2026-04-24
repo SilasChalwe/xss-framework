@@ -1,0 +1,40 @@
+{
+  "name": "covian",
+  "version": "1.0.0",
+  "description": "Security-first XSS prevention framework with deterministic C++ encoding in WebAssembly and a strict JavaScript DOM API.",
+  "type": "module",
+  "main": "js/index.js",
+  "exports": {
+    ".": "./js/index.js",
+    "./dom-api": "./js/dom_api.js",
+    "./policy": "./js/policy.js",
+    "./safe-dom": "./js/safe-dom.js",
+    "./secure-engine": "./js/secure_engine.js"
+  },
+  "files": [
+    "js/index.js",
+    "js/dom_api.js",
+    "js/policy.js",
+    "js/safe-dom.js",
+    "js/secure-directive.js",
+    "js/secure_engine.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "./scripts/build_wasm_docker.sh",
+    "build:local": "./scripts/build_wasm.sh",
+    "test:native": "./scripts/test_native.sh"
+  },
+  "keywords": [
+    "xss",
+    "security",
+    "wasm",
+    "webassembly",
+    "trusted-types",
+    "csp",
+    "encoding",
+    "sanitization"
+  ],
+  "license": "MIT"
+}

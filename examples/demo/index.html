@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      Content-Security-Policy enforces:
+        - No inline scripts
+        - Trusted Types required for all script sinks
+        - Only the covian-policy Trusted Types policy is allowed
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types covian-policy"
+    />
+    <title>Covian — XSS Security Framework Demo</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        background: #f5f5f5;
+        color: #222;
+      }
+
+      h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+      h2 { font-size: 1.2rem; margin: 2rem 0 0.5rem; border-bottom: 2px solid #ddd; padding-bottom: 0.25rem; }
+
+      .badge {
+        display: inline-block;
+        background: #16a34a;
+        color: #fff;
+        border-radius: 4px;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        vertical-align: middle;
+        margin-left: 0.4rem;
+      }
+
+      .panel {
+        background: #fff;
+        border: 1px solid #e2e2e2;
+        border-radius: 8px;
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1.2rem;
+      }
+
+      label { display: block; font-weight: 600; margin-bottom: 0.4rem; }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-family: monospace;
+      }
+
+      dl.output-row {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 0.3rem 0.8rem;
+        align-items: baseline;
+        margin-top: 0.8rem;
+        font-size: 0.9rem;
+      }
+
+      dl.output-row dt { font-weight: 600; color: #555; }
+      dl.output-row dd {
+        font-family: monospace;
+        word-break: break-all;
+        background: #f0f4f8;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin: 0;
+      }
+
+      #dom-output {
+        margin-top: 0.75rem;
+        padding: 0.8rem;
+        background: #f0f4f8;
+        border-radius: 6px;
+        min-height: 2.5rem;
+      }
+
+      .sink-result {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 5px;
+        margin-top: 0.5rem;
+      }
+      .sink-result.ok    { background: #dcfce7; color: #166534; }
+      .sink-result.error { background: #fee2e2; color: #991b1b; }
+
+      #loading { color: #888; font-style: italic; margin-top: 1rem; }
+      #app { display: none; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+      th, td { padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid #eee; }
+      th { border-bottom: 2px solid #ddd; }
+      td { font-family: monospace; word-break: break-all; }
+      td.verdict-safe    { color: #166534; font-weight: 600; }
+      td.verdict-blocked { color: #991b1b; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Covian Security Framework <span class="badge">Demo</span></h1>
+    <p>
+      This demo exercises every public API of the Covian framework:
+      context-aware output encoding (text / attribute / URL),
+      UTF-8 validation, unsafe DOM sink hardening, Trusted Types, and the safe DOM builder.
+    </p>
+
+    <p id="loading">⏳ Loading WebAssembly engine…</p>
+
+    <div id="app">
+      <!-- 1. Encoding playground -->
+      <h2>1. Context-aware encoding</h2>
+      <div class="panel">
+        <label for="user-input">Paste any payload (e.g. XSS, JavaScript URL, raw HTML):</label>
+        <input
+          type="text"
+          id="user-input"
+          value='&lt;img src=x onerror=alert(1)&gt; javascript:alert(1)'
+        />
+        <dl class="output-row">
+          <dt>encodeText</dt><dd id="out-text">—</dd>
+          <dt>encodeAttr</dt><dd id="out-attr">—</dd>
+          <dt>encodeURL</dt><dd id="out-url">—</dd>
+          <dt>validateUTF8</dt><dd id="out-utf8">—</dd>
+        </dl>
+      </div>
+
+      <!-- 2. Safe DOM API -->
+      <h2>2. Safe DOM API — <code>createDomApi()</code></h2>
+      <div class="panel">
+        <p style="margin-top:0">
+          The element below is built with Covian's typed DOM primitives.
+          No string HTML is ever used.
+        </p>
+        <div id="dom-output"></div>
+      </div>
+
+      <!-- 3. Unsafe sink hardening -->
+      <h2>3. Unsafe DOM sink hardening — <code>hardenDomSinks()</code></h2>
+      <div class="panel">
+        <p style="margin-top:0">
+          After <code>hardenDomSinks()</code> is called, writing to
+          <code>innerHTML</code> / <code>outerHTML</code> or calling
+          <code>insertAdjacentHTML</code> / <code>document.write</code>
+          throws a security violation. Results:
+        </p>
+        <div id="sink-results"></div>
+      </div>
+
+      <!-- 4. URL encoding table -->
+      <h2>4. URL encoding — blocked vs. allowed</h2>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Input URL</th>
+              <th>encodeURL output</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="url-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
