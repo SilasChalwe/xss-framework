@@ -119,11 +119,19 @@ dom.mount(root, link);
 ```
 
 ## Build Wasm
+
+The Wasm artifacts (`js/secure_engine.generated.js` and `js/secure_engine.generated.wasm`) are
+**pre-built by the CI pipeline** and committed to the repository.  When you clone this repository or
+install it as a dependency they are already present — **you do not need Emscripten installed**.
+
+If you need to rebuild them locally (e.g. after changing `cpp/secure_core.cpp`) run either:
+
 ```bash
-./scripts/build_wasm.sh
-# or
-./scripts/build_wasm_docker.sh
+./scripts/build_wasm.sh          # requires emcc in PATH
+./scripts/build_wasm_docker.sh   # requires Docker (recommended)
 ```
+
+Released builds are also attached as assets to every [GitHub Release](../../releases).
 
 ## Native adversarial tests
 ```bash

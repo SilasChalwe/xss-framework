@@ -18,6 +18,8 @@
     "js/safe-dom.js",
     "js/secure-directive.js",
     "js/secure_engine.js",
+    "js/secure_engine.generated.js",
+    "js/secure_engine.generated.wasm",
     "README.md",
     "LICENSE"
   ],

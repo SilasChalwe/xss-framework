@@ -1,3 +1,5 @@
 .build/
-js/secure_engine.generated.js
-js/secure_engine.generated.wasm
+# secure_engine.generated.js and .wasm are built by the CI pipeline
+# (see .github/workflows/ci.yml) and committed to the repository so that
+# users who clone or install from GitHub get the pre-built Wasm artifacts
+# without needing Emscripten locally.
