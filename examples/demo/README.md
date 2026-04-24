@@ -47,5 +47,6 @@ Why you should run a server:
 - WebAssembly is loaded as a separate asset
 - CSP + Trusted Types checks are designed for normal HTTP/HTTPS origins
 
-> The CSP in `index.html` enforces `require-trusted-types-for 'script'`, so
-> the demo must be opened over HTTP/HTTPS.
+> The CSP in `index.html` enforces Trusted Types and allows Emscripten Wasm
+> compilation via `script-src 'unsafe-eval' 'wasm-unsafe-eval'`, so the demo
+> must be opened over HTTP/HTTPS.

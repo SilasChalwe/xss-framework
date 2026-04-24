@@ -61,7 +61,7 @@ Use a module script and build your UI from Covian DOM primitives.
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; require-trusted-types-for 'script'; trusted-types covian-policy" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; require-trusted-types-for 'script'; trusted-types covian-policy" />
   </head>
   <body>
     <main id="app"></main>
