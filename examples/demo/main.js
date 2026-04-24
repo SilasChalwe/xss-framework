@@ -18,154 +18,110 @@ import createWasmModule from '../../js/secure_engine.generated.js';
 
 // Source-controlled JS modules — no build step required for these.
 import { createDomApi } from '../../js/dom_api.js';
-import { initSecureEngine } from '../../js/secure_engine.js';
 
 async function bootstrap() {
-  let dom = null;
-  let engine = null;
-  let compatibilityMessage = '';
-
-  // Try full Covian mode first (safe DOM + sink hardening + Trusted Types).
-  try {
-    dom = await createDomApi({ wasmFactory: createWasmModule });
-    engine = dom;
-  } catch (err) {
-    // Fallback mode for browsers missing Trusted Types support:
-    // keep encoding APIs interactive so the demo is still useful.
-    compatibilityMessage = err.message;
-    engine = await initSecureEngine({ wasmFactory: createWasmModule });
-  }
-
+  // Create the full safe DOM API (this also initializes Wasm, calls
+  // hardenDomSinks and requireTrustedTypes internally).
+  const dom = await createDomApi({ wasmFactory: createWasmModule });
   clearTimeout(slowLoadTimer);
 
   // Reveal the UI.
   document.getElementById('loading').remove();
-  document.getElementById('app').hidden = false;
-  if (!dom) {
-    document.getElementById('compat-note').hidden = false;
-  }
+  document.getElementById('app').style.display = 'block';
 
   // Encoding playground — update output fields on every keystroke.
   function updateEncoding(value) {
-    document.getElementById('out-text').textContent = engine.encodeText(value);
-    document.getElementById('out-attr').textContent = engine.encodeAttr(value);
-    document.getElementById('out-url').textContent  = engine.encodeURL(value);
-    document.getElementById('out-utf8').textContent = engine.validateUTF8(value)
+    document.getElementById('out-text').textContent = dom.encodeText(value);
+    document.getElementById('out-attr').textContent = dom.encodeAttr(value);
+    document.getElementById('out-url').textContent  = dom.encodeURL(value);
+    document.getElementById('out-utf8').textContent = dom.validateUTF8(value)
       ? 'valid UTF-8'
       : 'invalid UTF-8';
   }
 
   const inputEl = document.getElementById('user-input');
-  const runApiBtn = document.getElementById('run-api-btn');
-  const apiMethodEl = document.getElementById('api-method');
-  const apiOutputEl = document.getElementById('run-api-output');
   updateEncoding(inputEl.value);
   inputEl.addEventListener('input', (e) => updateEncoding(e.target.value));
-
-  function runSelectedApi() {
-    const value = inputEl.value;
-    const method = apiMethodEl.value;
-    const result = method === 'validateUTF8'
-      ? engine.validateUTF8(value)
-      : engine[method](value);
-    apiOutputEl.textContent = JSON.stringify({ method, input: value, result }, null, 2);
-  }
-  runSelectedApi();
-  runApiBtn.addEventListener('click', runSelectedApi);
 
   // Build a card element using only typed DOM primitives — no innerHTML, no
   // template strings for HTML.
   const userQuery = new URLSearchParams(location.search).get('q')
     ?? '<img src=x onerror=alert(1) />';
 
+  const heading = dom.createElement('strong', {
+    children: [dom.createText('Covian safe DOM output')],
+  });
+
+  const queryText = dom.createText(`Input: ${userQuery}`);
+
+  const link = dom.createElement('a', {
+    attrs: { href: 'https://github.com/SilasChalwe/xss-framework', target: '_blank' },
+    children: [dom.createText('View source on GitHub')],
+  });
+
+  const card = dom.createElement('div', {
+    attrs: { class: 'covian-card' },
+    children: [
+      heading,
+      dom.createElement('br'),
+      queryText,
+      dom.createElement('br'),
+      link,
+    ],
+  });
+
+  dom.mount(document.getElementById('dom-output'), card);
+
+  // Unsafe sink hardening — attempt each blocked sink and display the result.
   const sinkResults = document.getElementById('sink-results');
-  const domOutput = document.getElementById('dom-output');
 
-  if (dom) {
-    const heading = dom.createElement('strong', {
-      children: [dom.createText('Covian safe DOM output')],
-    });
-
-    const queryText = dom.createText(`Input: ${userQuery}`);
-
-    const link = dom.createElement('a', {
-      attrs: { href: 'https://github.com/SilasChalwe/xss-framework', target: '_blank' },
-      children: [dom.createText('View source on GitHub')],
-    });
-
-    const card = dom.createElement('div', {
-      attrs: { class: 'covian-card' },
-      children: [
-        heading,
-        dom.createElement('br'),
-        queryText,
-        dom.createElement('br'),
-        link,
-      ],
-    });
-
-    dom.mount(domOutput, card);
-  } else {
-    domOutput.textContent = `Safe DOM API disabled in this browser: ${compatibilityMessage}`;
-    domOutput.style.color = '#991b1b';
-  }
-
-  // Unsafe sink hardening playground.
-  if (!dom) {
+  function trySink(label, fn) {
     const row = document.createElement('div');
-    row.className = 'sink-result error';
-    row.textContent = 'Sink hardening unavailable because Trusted Types is not supported in this browser.';
-    sinkResults.appendChild(row);
-  } else {
-    const sinkSelect = document.getElementById('sink-select');
-    const sinkPayload = document.getElementById('sink-payload');
-    const runSinkBtn = document.getElementById('run-sink-btn');
-
-    function trySink(label, fn) {
-      const row = document.createElement('div');
-      try {
-        fn();
-        // If we reach here, the sink was NOT blocked (unexpected after hardenDomSinks).
-        row.className = 'sink-result error';
-        row.textContent = `FAIL: ${label} - not blocked (unexpected)`;
-      } catch (err) {
-        row.className = 'sink-result ok';
-        row.textContent = `BLOCKED: ${label} - ${err.message}`;
-      }
-      sinkResults.appendChild(row);
+    try {
+      fn();
+      // If we reach here, the sink was NOT blocked (unexpected after hardenDomSinks).
+      row.className = 'sink-result error';
+      row.textContent = `FAIL: ${label} - not blocked (unexpected)`;
+    } catch (err) {
+      row.className = 'sink-result ok';
+      row.textContent = `BLOCKED: ${label} - ${err.message}`;
     }
-
-    const probe = document.createElement('div');
-    runSinkBtn.addEventListener('click', () => {
-      const payload = sinkPayload.value;
-      const mode = sinkSelect.value;
-      if (mode === 'innerHTML') {
-        trySink('element.innerHTML', () => { probe.innerHTML = payload; });
-      } else if (mode === 'outerHTML') {
-        trySink('element.outerHTML', () => { probe.outerHTML = payload; });
-      } else if (mode === 'insertAdjacentHTML') {
-        trySink('element.insertAdjacentHTML', () => { probe.insertAdjacentHTML('beforeend', payload); });
-      } else {
-        trySink('document.write', () => { document.write(payload); });
-      }
-    });
+    sinkResults.appendChild(row);
   }
 
-  // URL encoding playground — test any URL value and append result rows.
+  const probe = document.createElement('div');
+
+  trySink('element.innerHTML', () => { probe.innerHTML = '<b>injected</b>'; });
+  trySink('element.outerHTML', () => { probe.outerHTML = '<b>injected</b>'; });
+  trySink('element.insertAdjacentHTML', () => {
+    probe.insertAdjacentHTML('beforeend', '<b>injected</b>');
+  });
+  trySink('document.write', () => { document.write('<b>injected</b>'); });
+
+  // URL encoding table — shows which schemes are blocked and which are allowed.
   const BLOCKED = 'about:invalid#covian-blocked-url';
-  const urlInput = document.getElementById('url-input');
-  const runUrlBtn = document.getElementById('run-url-btn');
-  const clearUrlBtn = document.getElementById('clear-url-btn');
+
+  const urlSamples = [
+    { label: 'javascript:alert(1)',                                         input: 'javascript:alert(1)' },
+    { label: 'data:text/html,<h1>hi</h1>',                                  input: 'data:text/html,<h1>hi</h1>' },
+    { label: 'vbscript:MsgBox(1)',                                          input: 'vbscript:MsgBox(1)' },
+    { label: 'https://github.com/SilasChalwe/xss-framework search (space in URL)',   input: 'https://github.com/SilasChalwe/xss-framework search' },
+    { label: 'https://owasp.org/?q=<script>xss</script>',                  input: 'https://owasp.org/?q=<script>xss</script>' },
+    { label: '/relative/path?q=hello world',                                input: '/relative/path?q=hello world' },
+    { label: '#anchor',                                                     input: '#anchor' },
+    { label: '  javascript:alert(1)  (trimmed)',                            input: '  javascript:alert(1)  ' },
+  ];
+
   const tbody = document.getElementById('url-tbody');
 
-  function appendUrlRow(input) {
-    const encoded = engine.encodeURL(input);
+  for (const { label, input } of urlSamples) {
+    const encoded = dom.encodeURL(input);
     const isBlocked = encoded === BLOCKED;
 
     const tr = document.createElement('tr');
 
     const tdInput = document.createElement('td');
-    tdInput.textContent = input;
+    tdInput.textContent = label;
 
     const tdEncoded = document.createElement('td');
     tdEncoded.textContent = encoded;
@@ -179,14 +135,6 @@ async function bootstrap() {
     tr.appendChild(tdVerdict);
     tbody.appendChild(tr);
   }
-
-  runUrlBtn.addEventListener('click', () => {
-    appendUrlRow(urlInput.value);
-  });
-  clearUrlBtn.addEventListener('click', () => {
-    tbody.textContent = '';
-  });
-  appendUrlRow(urlInput.value);
 }
 
 const slowLoadTimer = setTimeout(() => {
